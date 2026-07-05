@@ -46,8 +46,9 @@ const MODES={
   autres:{lab:"AUTRES fort",col:"var(--orange)",desc:"Arné·Bazordan·Lassales·Gaussan à fond · Monléon : 📰 + ✉️📦 + 📥"},
   tout:{lab:"Complète",col:"var(--sub)",desc:"Toutes les boîtes partout"}
 };
-let S={mode:"tout",idx:{},colis:{},prio:{},done:{},priv:false};
+let S={mode:"tout",idx:{},colis:{},prio:{},done:{},priv:true};
 try{S=Object.assign(S,JSON.parse(localStorage.getItem("jourState")||"{}"))}catch(e){}
+if(!S.privSet)S.priv=true; // flouté d'office tant que l'utilisateur n'a pas choisi lui-même
 function save(){try{localStorage.setItem("jourState",JSON.stringify(S))}catch(e){}}
 const IDX=()=>S.idx[S.mode]||0;
 
@@ -131,7 +132,7 @@ function render(){
     if(S.colis[r.key])why.push("<b>📦 COLIS</b>");
     if(S.prio[r.key])why.push("<b>✉️ PRIORITAIRE</b>");
     if(r.g.includes("SP"))why.push("⛔ pub");
-    if(r.x)why.push(esc(r.x));
+    if(r.x)why.push('<span class="xn">'+esc(r.x)+'</span>');
     let ic="";
     if(r.g.includes("CHIEN"))ic+="🐕";
     if(r.rel)ic+="📥";
@@ -277,7 +278,7 @@ $("selNum").onchange=()=>{
   adrStop=ADR[DATA[ci].v][ri].stops[ni];
   const s=adrStop;
   $("adrNm").textContent=s.tx;
-  $("adrDet").textContent=s.com+" · "+KEY2STREET[s.key].street+" · "+(s.c==="D"?"boîte à DROITE":s.c==="G"?"boîte à GAUCHE":s.c==="F"?"en FACE":"")+" n°"+(s.n||"–")+(s.x?" — "+s.x:"");
+  $("adrDet").innerHTML=esc(s.com+" · "+KEY2STREET[s.key].street+" · "+(s.c==="D"?"boîte à DROITE":s.c==="G"?"boîte à GAUCHE":s.c==="F"?"en FACE":"")+" n°"+(s.n||"–"))+(s.x?' — <span class="xn">'+esc(s.x)+'</span>':"");
   let th="";
   s.g.forEach(t=>th+='<span class="tag t-'+t+'">'+({SP:"STOP PUB",DEP:"DÉPÊCHE",CHIEN:"🐕 CHIEN",RS:"RS"}[t]||t)+'</span>');
   if(s.b)th+='<span class="tag t-BAL">'+esc(s.b)+'</span>';
@@ -313,10 +314,10 @@ function applyPriv(){
   $("privBtn").classList.toggle("on",!!S.priv);
   $("privBtn").textContent=S.priv?"🕶":"👁";
 }
-$("privBtn").onclick=()=>{S.priv=!S.priv;save();applyPriv()};
+$("privBtn").onclick=()=>{S.priv=!S.priv;S.privSet=true;save();applyPriv()};
 function startPeek(e){
   if(!S.priv)return;
-  const t=e.target.closest(".nm,.cNm,#adrNm");
+  const t=e.target.closest(".nm,.cNm,#adrNm,.xn");
   if(!t)return;
   clearTimeout(peekTimer);
   peekTimer=setTimeout(()=>{t.classList.add("peek");peekEl=t;didPeek=true},250);
